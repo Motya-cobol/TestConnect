@@ -1,0 +1,100 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CONNECT_FN.
+      * 
+       DATA DIVISION.
+      * 
+       WORKING-STORAGE SECTION.
+
+      * SQL declare variables 
+           EXEC SQL 
+              BEGIN DECLARE SECTION 
+           END-EXEC.
+
+      * connect fields with variable length 
+       01 WS-DBNAME.
+           49 WS-DBNAME-LEN            PIC S9(4) COMP-5.
+           49 WS-DBNAME-BUF            PIC X(9).
+       01 WS-USERID.                   
+           49 WS-USERID-LEN             PIC S9(4) COMP-5.
+           49 WS-USERID-BUF             PIC X(20).
+       01 WS-PSWD.                     
+           49 WS-PSWD-LEN               PIC S9(4) COMP-5.
+           49 WS-PSWD-BUF               PIC X(20).
+      *
+           EXEC SQL 
+              END DECLARE SECTION 
+           END-EXEC.
+      * 
+           EXEC SQL 
+              INCLUDE sqlca
+           END-EXEC.
+      *     
+       LOCAL-STORAGE SECTION. 
+      *
+       LINKAGE SECTION.
+       COPY "connect_fn".
+       COPY "check_err_fn".
+
+       PROCEDURE DIVISION USING LN-CONNECT LN-ERROR.
+      *
+           EVALUATE TRUE
+              WHEN LN-CONNECT-START
+                 PERFORM CONNECT                 
+          
+              WHEN LN-CONNECT-RESET
+                 PERFORM CONNECT-RESET
+                
+              WHEN OTHER
+      D           DISPLAY "CONNECT_NF: UNSUPPORTED CONNECT FUNCTION"
+                 MOVE 
+                 "Unsupported Connect Function in LN-CONNECT.LN-FUNC" 
+                    TO LN-ERROR-BUFFER OF LN-ERROR
+                 MOVE -1 TO LN-SQLCODE of LN-ERROR
+      D           DISPLAY "CONNECT_NF: EXITING..."
+      * Return from CHECK_ERR_FN without calling for
+      *    error codes related to SQLCA and SQLSTATE.
+                 GOBACK                  
+           END-EVALUATE
+
+      * Check for Errors
+      D     DISPLAY "CONNECT_FN: Checking for errors..."
+           CALL "CHECK_ERR_FN" USING SQLCA LN-ERROR
+
+      D     DISPLAY "Error Codes displaying from CONNECT_FN" 
+      D     DISPLAY "Error Code = " LN-SQLCODE
+      D     DISPLAY "Error Buffer = " LN-ERROR-BUFFER
+      D     DISPLAY "SQL State = " LN-STATE 
+      D     DISPLAY "SQL State Buffer = " LN-STATE-BUFFER
+           GOBACK
+           . 
+      *     
+       CONNECT SECTION.    
+      D     DISPLAY "CONNECT_FN: CONNECTING"
+           MOVE LN-DBNAME OF LN-CONNECT TO WS-DBNAME-BUF
+           MOVE FUNCTION LENGTH(WS-DBNAME-BUF) TO WS-DBNAME-LEN
+
+           MOVE LN-USERID OF LN-CONNECT TO WS-USERID-BUF
+           MOVE FUNCTION LENGTH(WS-USERID-BUF) TO WS-USERID-LEN
+
+           MOVE LN-PSWD OF LN-CONNECT TO WS-PSWD-BUF
+           MOVE FUNCTION LENGTH(WS-PSWD-BUF) TO WS-PSWD-LEN
+      
+      D     DISPLAY "CONNECT_FN: Conection parameters: "
+      D     DISPLAY WS-DBNAME-BUF " Length = " WS-DBNAME-LEN
+      D     DISPLAY WS-USERID-BUF " Lenght = " WS-USERID-LEN 
+      D     DISPLAY WS-PSWD-BUF " Lenght = " WS-PSWD-LEN
+           EXEC SQL
+               CONNECT TO    :WS-DBNAME
+                       USER  :WS-USERID
+                       USING :WS-PSWD
+           END-EXEC
+           .                       
+      *
+       CONNECT-RESET SECTION.
+      D     DISPLAY "CONNECT_FN: RESTINNG CONNECTION"
+           EXEC SQL  
+               CONNECT RESET
+           END-EXEC    
+           .
+      *    
+       END PROGRAM CONNECT_FN.         

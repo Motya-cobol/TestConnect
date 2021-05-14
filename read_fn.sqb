@@ -1,0 +1,108 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.  READ_FN.
+      *
+       DATA DIVISION.
+      *
+       WORKING-STORAGE SECTION.           
+           EXEC SQL
+                BEGIN DECLARE SECTION
+           END-EXEC.
+       
+       01  WS-FIRSTNME.
+           49 WS-FIRSTNME-LEN   pic s9(4) comp-5.
+           49 WS-FIRSTNME-BUF   pic x(12).
+       01  WS-LASTNAME.
+           49 WS-LASTNAME-LEN   pic s9(4) comp-5.
+           49 WS-LASTNAME-BUF   pic x(15).
+       01  WS-SEX.
+           49 WS-SEX-LEN        pic S9(04) comp-5.
+           49 WS-SEX-BUF        pic X(1).
+
+           EXEC SQL
+                END DECLARE SECTION
+           END-EXEC.
+
+           EXEC SQL
+                INCLUDE SQLCA
+           END-EXEC.
+      *
+       LOCAL-STORAGE SECTION.     
+      *
+       LINKAGE SECTION.
+       COPY "read_fn".
+       COPY "check_err_fn".
+      *
+       PROCEDURE DIVISION USING LN-READ LN-ERROR.
+      *       
+           EVALUATE TRUE
+
+              WHEN LN-READ-OPEN
+                PERFORM OPEN-CURSOR                 
+          
+              WHEN LN-READ-CLOSE 
+                PERFORM CLOSE-CURSOR
+
+              WHEN LN-READ-FETCH 
+                PERFORM FETCH-CURSOR
+
+              WHEN OTHER
+      D         DISPLAY "READ_FN: UNSUPPORTED READ FUNCTION"
+                MOVE 
+                 "Unsupported Read Function in LN-READ.LN-READ-FUNC" 
+                    TO LN-ERROR-BUFFER OF LN-ERROR
+                MOVE -1 TO LN-SQLCODE of LN-ERROR
+      D         DISPLAY "READ_FN: EXITING..."
+      * Return from CHECK_ERR_FN without calling for
+      *    error codes related to SQLCA and SQLSTATE.
+               GOBACK               
+           END-EVALUATE.
+      * Check for Errors
+      D     DISPLAY "Checking for errors..."
+           CALL "CHECK_ERR_FN" USING SQLCA LN-ERROR
+
+      D     DISPLAY "Error Codes displaying from READ_FN" 
+      D     DISPLAY "Error Code = " LN-SQLCODE
+      D     DISPLAY "Error Buffer = " LN-ERROR-BUFFER
+      D     DISPLAY "SQL State = " LN-STATE 
+      D     DISPLAY "SQL State Buffer = " LN-STATE-BUFFER
+           GOBACK
+           .
+      *
+       OPEN-CURSOR SECTION.
+
+           MOVE LN-SEX OF LN-READ TO WS-SEX-BUF
+           MOVE 1 TO WS-SEX-LEN
+           EXEC SQL
+              DECLARE CURS-EMPLOYEE CURSOR FOR
+                SELECT FIRSTNME,
+                       LASTNAME
+                FROM   DB2INST1.EMPLOYEE
+                WHERE SEX = :WS-SEX
+           END-EXEC.
+      *
+           EXEC SQL
+              OPEN CURS-EMPLOYEE USING :WS-SEX
+           END-EXEC.       
+      *
+       CLOSE-CURSOR SECTION.
+      *
+           EXEC SQL
+              CLOSE CURS-EMPLOYEE
+           END-EXEC.
+      *
+       FETCH-CURSOR SECTION.
+      *
+           MOVE SPACES TO WS-FIRSTNME,
+                          WS-LASTNAME
+           EXEC SQL 
+              FETCH CURS-EMPLOYEE INTO
+                 :WS-FIRSTNME,
+                 :WS-LASTNAME
+           END-EXEC.
+      *
+           MOVE WS-FIRSTNME-BUF TO LN-FIRST-NAME
+           MOVE WS-LASTNAME-BUF TO LN-LAST-NAME
+           .  
+       END PROGRAM READ_FN.        
+      * 
+       
