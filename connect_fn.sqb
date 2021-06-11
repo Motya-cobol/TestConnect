@@ -1,3 +1,14 @@
+      ****************************************************************
+      *    This files codes for CONNECT_FN function
+      *    CONNECT_FN receives two arguments by reference
+      *    LN-CONNECT - defined in connect_fn.cpy
+      *       
+      *    LN-ERROR - defined in check_err_fn.cpy
+      *       the LN-ERROR is populated with SQLCODE & SLQSTATE
+      *          errors & warnings. See check_err_fn for details
+      *       if LN-CONNECT is invalid then
+      *          CONNECT_FN returns -1 via LN-SQLCODE of LN-ERROR
+      ****************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. CONNECT_FN.
       * 
@@ -43,6 +54,12 @@
           
               WHEN LN-CONNECT-RESET
                  PERFORM CONNECT-RESET
+
+              WHEN LN-CONNECT-COMMIT
+                 PERFORM CONNECT-COMMIT
+
+              WHEN LN-CONNECT-ROLLBACK
+                 PERFORM CONNECT-ROLLBACK
                 
               WHEN OTHER
       D           DISPLAY "CONNECT_NF: UNSUPPORTED CONNECT FUNCTION"
@@ -96,5 +113,19 @@
                CONNECT RESET
            END-EXEC    
            .
+      *
+       CONNECT-COMMIT SECTION.
+      D    DISPLAY "CONNECT_FN: COMMITNG CONNECTION"
+           EXEC SQL  
+               COMMIT
+           END-EXEC
+           .    
+      *
+       CONNECT-ROLLBACK SECTION.
+      D    DISPLAY "CONNECT_FN: COMMITNG CONNECTION"
+           EXEC SQL  
+               ROLLBACK
+           END-EXEC
+           .    
       *    
        END PROGRAM CONNECT_FN.         

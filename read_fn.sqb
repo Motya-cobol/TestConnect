@@ -1,3 +1,14 @@
+      ****************************************************************
+      *    This files codes for READ_FN function
+      *    READ_FN receives two arguments by reference
+      *    LN-READ - defined in connect_fn.cpy
+      *       
+      *    LN-ERROR - defined in check_err_fn.cpy
+      *       the LN-ERROR is populated with SQLCODE & SLQSTATE
+      *          errors & warnings. See check_err_fn for details
+      *       if LN-READ is invalid then
+      *          READ_FN returns -1 via LN-SQLCODE of LN-ERROR
+      ****************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID.  READ_FN.
       *
@@ -45,6 +56,9 @@
               WHEN LN-READ-FETCH 
                 PERFORM FETCH-CURSOR
 
+              WHEN LN-READ-UPDATE 
+                PERFORM UPDATE-CURSOR 
+
               WHEN OTHER
       D         DISPLAY "READ_FN: UNSUPPORTED READ FUNCTION"
                 MOVE 
@@ -57,7 +71,7 @@
                GOBACK               
            END-EVALUATE.
       * Check for Errors
-      D     DISPLAY "Checking for errors..."
+      D     DISPLAY "READ_FN: Checking for errors..."
            CALL "CHECK_ERR_FN" USING SQLCA LN-ERROR
 
       D     DISPLAY "Error Codes displaying from READ_FN" 
@@ -78,6 +92,7 @@
                        LASTNAME
                 FROM   DB2INST1.EMPLOYEE
                 WHERE SEX = :WS-SEX
+                FOR UPDATE OF SEX
            END-EXEC.
       *
            EXEC SQL
@@ -103,6 +118,16 @@
            MOVE WS-FIRSTNME-BUF TO LN-FIRST-NAME
            MOVE WS-LASTNAME-BUF TO LN-LAST-NAME
            .  
+      *
+       UPDATE-CURSOR SECTION.
+           MOVE LN-SEX OF LN-READ TO WS-SEX-BUF
+           MOVE 1 TO WS-SEX-LEN
+           EXEC SQL
+              UPDATE DB2INST1.EMPLOYEE
+                 SET SEX = :WS-SEX
+                 WHERE CURRENT OF CURS-EMPLOYEE
+           END-EXEC.
+           
        END PROGRAM READ_FN.        
       * 
        

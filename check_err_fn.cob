@@ -1,8 +1,14 @@
       ********************************
-      * GET ERROR MESSAGE through GET ERROR MESSAGE APIs 
+      * GET ERROR MESSAGE through GET ERROR MESSAGE DB2 APIs 
       *       sqlgintp & sqlggstt
-      * Each SQLSTATE & SQLCODE buffers retruned as is without 
-      *    Line delimination
+      * Each SQLSTATE & SQLCODE buffers are returned as is without 
+      *    Line delimination formatting
+      * if no SQL error then LN-SQLCODE is set to 0, 
+      *  else LN-SQLCODE is set to SQLCODE
+      * if there is SQL state message then LN-STATE is set to SQLSTATE
+      *  else there is error retrieving SQL state message then 
+      *    LN-STATE is set to sqlggstt return value 
+      *       (see DB2 sqlggstt documentation for return error codes)  
       ********************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. CHECK_ERR_FN.
@@ -12,13 +18,14 @@
        DATA DIVISION.
       * 
        WORKING-STORAGE SECTION.
-      * connect fields with variable length 
+      * Fields for SQLCODE and SQLSTATE
        01  WS-ERROR       PIC S9(9) COMP-5.
        01  WS-STATE       PIC S9(9) COMP-5.
       * Maximum Buffer Size 
        01  WS-BUFFER-SIZE PIC S9(4) COMP-5  VALUE 1024.
-      * Maximum line lenght, no parsing in this function
-       01 WS-LINE-LENGTH   PIC S9(4) COMP-5  VALUE 1024.
+      * Maximum line lenght, the functionality for parsing of error 
+      *    and state messages is not implemented in CHECK_ERR_FN
+       01 WS-LINE-LENGTH  PIC S9(4) COMP-5  VALUE 1024.
        01 WS-ERROR-BUFFER PIC X(1024).
        01 WS-STATE-BUFFER PIC X(1024).
       *

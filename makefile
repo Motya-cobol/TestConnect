@@ -18,10 +18,13 @@ sqb_objs = $(patsubst %,$(TEMPS)/%,$(_sqb_objs))
 
 $(TEMPS)/%.o: %.sqb $(COPYBOOKS)
 	echo "Making $@ from $<"
+# First precombile *.sqb containg embedded SQL into *.cbl containing DB2 API calls and create bind file
 	db2 connect to sample
 	db2 prep $< bindfile target ANSI_COBOL
+# Bind embedded SQL
 	db2 bind $(patsubst %.sqb,%.bnd,$<)
 	db2 connect reset
+# Complie *.cbl into object 	
 	$(COBC) $(COBCOPTS) -c $(patsubst %.sqb,%.cbl,$<) -t $(patsubst %.sqb,%.lst,$<)
 
 # rules for .cob-> .o
@@ -30,6 +33,7 @@ _cob_objs = $(cob_srcs:.cob=.o)
 cob_objs = $(patsubst %,$(TEMPS)/%,$(_cob_objs))
 
 $(TEMPS)/%.o: %.cob $(COPYBOOKS)
+# Complie *.cob directly into object. No precompile needed for *.cob files
 	$(COBC) $(COBCOPTS) -c $< -t $(patsubst %.cob,%.lst,$<)
 
 # rule for the main() cobol file.
@@ -40,6 +44,7 @@ _cbm_objs = $(cbm_srcs:.cbm=.o)
 cbm_objs = $(patsubst %,$(TEMPS)/%,$(_cbm_objs))
 
 $(TEMPS)/%.o: %.cbm $(COPYBOOKS)
+# Complie *.cbm directly into object. No precompile needed for *.cbm file. It's assumed not to have any SQL
 	$(COBC) $(COBCOPTS) -c -x $< -t $(patsubst %.cbm,%.lst,$<)
 
 # linking to make demo

@@ -1,3 +1,9 @@
+      ****************************************************************
+      *    This files codes for main entry point. 
+      *       Similar to main() in C
+      *    There should be  only one file with `cbm` extension.  
+      *    Tjis file codes CLI user interraction
+      ****************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. MAIN.
       * 
@@ -12,6 +18,7 @@
        01  WS-USERID            PIC X(20).
        01  WS-PSWD              PIC X(20).
        01  WS-SEX               PIC X(1).
+       01  WS-SAVE               PIC X(1).
        01  WS-RECORD-COUNTER    PIC 9(5) VALUE ZERO.
       * 
        LOCAL-STORAGE SECTION. 
@@ -19,6 +26,7 @@
        LINKAGE SECTION.
       *
        PROCEDURE DIVISION.
+      * Get DB2 connect parameters
            DISPLAY "Please Enter DataBase Name:" with no advancing
            ACCEPT WS-DBNAME
 
@@ -32,7 +40,7 @@
            MOVE WS-DBNAME TO LN-DBNAME OF LN-CONNECT 
            MOVE WS-USERID TO LN-USERID OF LN-CONNECT 
            MOVE WS-PSWD   TO LN-PSWD OF LN-CONNECT 
-      *
+      * Connect to DB
            SET LN-CONNECT-START OF LN-CONNECT TO TRUE
            CALL "CONNECT_FN" USING LN-CONNECT LN-ERROR 
            IF LN-SQLCODE OF LN-ERROR EQUAL ZERO THEN
@@ -41,10 +49,10 @@
               DISPLAY "Connect Failed" 
               PERFORM PRINT-ERRORS
            END-IF 
-      *
+      * Get SEX as a selection criteria for Employees
            DISPLAY "Please Enter Employee SEX M/F:" with no advancing
            ACCEPT WS-SEX     
-      *
+      * Open cursor to select from Employee table
            DISPLAY "Opening cursor..."
            INITIALIZE LN-READ 
            MOVE WS-SEX TO LN-SEX OF LN-READ 
@@ -66,13 +74,30 @@
            IF LN-SQLCODE OF LN-ERROR EQUAL ZERO THEN
               PERFORM UNTIL LN-SQLCODE OF LN-ERROR EQUAL +100
                  ADD 1 TO WS-RECORD-COUNTER
+      * Prompt for chenging SEX field at current cursor position           
+                 DISPLAY "Please Enter New SEX (M/F) For:" 
+                    with no advancing
                  DISPLAY LN-FIRST-NAME OF LN-READ SPACE
-                         LN-LAST-NAME OF LN-READ      
+                         LN-LAST-NAME OF LN-READ
+                 ACCEPT WS-SEX 
+                 MOVE WS-SEX TO LN-SEX OF LN-READ 
+                 SET LN-READ-UPDATE OF LN-READ-FUNC OF LN-READ TO TRUE
+      * Update current cursor record           
+                 CALL "READ_FN" USING LN-READ LN-ERROR
+                 IF LN-SQLCODE OF LN-ERROR NOT EQUAL ZERO THEN
+                    DISPLAY "Couldn't change sex for: "
+                       WITH NO ADVANCING
+                    DISPLAY LN-FIRST-NAME OF LN-READ SPACE
+                         LN-LAST-NAME OF LN-READ 
+                 END-IF
+      * Fetch next record
+                 SET LN-READ-FETCH OF LN-READ-FUNC OF LN-READ TO TRUE    
                  CALL "READ_FN" USING LN-READ LN-ERROR                          
               END-PERFORM
            END-IF 
       *
-      * IF CALL READ_FN retuned with errors
+      * IF CALL READ_FN retuned with errors, SQLCODE is not equal 100 
+      * When reading all records DB2 sets SQCODE to +100  
            IF LN-SQLCODE OF LN-ERROR NOT EQUAL +100 THEN           
               DISPLAY 
               "Error Codes displaying from MAIN AFTER Fetching CURSOR"
@@ -80,7 +105,27 @@
            END-IF
       *
            DISPLAY "Total Records Fetched: " WS-RECORD-COUNTER
-      *
+      * Prompt for commiting or rolling back updated cursor rows
+           DISPLAY "Would you like to save employee SEX changes? (Y/N):"
+                 with no advancing
+           ACCEPT WS-SAVE
+           IF WS-SAVE EQUAL "Y" THEN
+              DISPLAY "Commiting changes..." WITH NO ADVANCING 
+              SET LN-CONNECT-COMMIT OF LN-CONNECT TO TRUE
+           ELSE
+              DISPLAY "Rolling back changes..." WITH NO ADVANCING 
+              SET LN-CONNECT-ROLLBACK OF LN-CONNECT TO TRUE
+           END-IF
+      *    
+           CALL "CONNECT_FN" USING LN-CONNECT LN-ERROR 
+           IF LN-SQLCODE OF LN-ERROR EQUAL ZERO THEN
+              DISPLAY " Successful"
+           ELSE 
+              DISPLAY " Failed"
+              PERFORM PRINT-ERRORS
+           END-IF 
+
+      * Reset connection before terminating     
            DISPLAY "Resetting connection"
            SET LN-CONNECT-RESET OF LN-CONNECT TO TRUE
            CALL "CONNECT_FN" USING LN-CONNECT LN-ERROR 
