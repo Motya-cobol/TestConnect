@@ -29,11 +29,11 @@ At the end, the user is given an option of saving all the changes or roloing the
 This is not a typical COBOL application. But since it's GnuCobol, I approached this project as if it's a normal C code. Meaning, short files that code for separate functionality.
 ### File Extensions
 `.cob` - Files that do not requre DB2 precompile.  
-`.sqb` - Files that need DB2 precompile.  
-`.sql` - DB2 precompile scripts.  
-`.cpy` - COBOL copybook. For new to COBOL, it's like `.h`  
+`.sqb` - Files that need DB2 precompile.
+`.cbm` - COBOL files containing main entry point. For those new to COBOL, it's like main() in C. There should be  only one file with `cbm` extension 
+`.cpy` - COBOL copybook. For those new to COBOL, it's like `.h` in C
   
 `check_err_fn.*` - Functionality for checking DB2 erors by calling DB2 API  
 `connect_fn.*` - Functionally for connecting to DB2/terminating connetion, commiting/rollng back the changes.  
 `read_fn.*` - Functionality for reading/updating/inserting rows. This is where we use DB2 cursor.  
-`main.*` - Main for coding CLI user interraction.
+`main.cbm` - Main for coding CLI user interraction.
