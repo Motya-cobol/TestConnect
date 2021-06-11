@@ -19,7 +19,8 @@ At the end, the user is given an option of saving all the changes or rolling the
 ## Compling and running
 1. Set up DB2 environment by running IBM supplied bash script.
     `. /home/db2instance/sqllib/db2profile` Replace "db2instance" with your default DB2 instance
-    The project assumes that DB2 is installed with a separate instance and its password. Or DB admin has created appropriate login credentials for the developer. This is done to separate DB admin and production environment on your workstation.
+    The project assumes that DB2 is installed with a separate instance and its password. Or DB admin has created appropriate login credentials for the developer. This is done to separate DB admin and production environment on your workstation.  
+    Your DB admin should grant all permissions to the table EMPLOYEE to PUBLIC in order for precompile to work without user/password. This is done for the ease of this simple demo project.  
 2. Start DB2 by `db2start`    
 2. `make demo`
 3. `./demo`
